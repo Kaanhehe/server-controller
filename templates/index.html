@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Server Control Panel</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <h1>Server Control Panel</h1>
+    <div id="server-list">
+        {% for server in servers %}
+        <div class="server-item">
+            <span>{{ server.name }}</span>
+            <button onclick="startServer('{{ server.name }}')">Start</button>
+            <button onclick="editServer('{{ server.name }}')">Edit</button>
+            <button onclick="removeServer('{{ server.name }}')">Remove</button>
+        </div>
+        {% endfor %}
+    </div>
+    <button onclick="addServer()">Add Server</button>
+    <script>
+        // Pass the servers data to JavaScript
+        var servers = {{ servers | tojson }};
+        function startServer(name) {
+            fetch("/start", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name })
+            });
+        }
+
+        function editServer(name) {
+            const server = servers.find(s => s.name === name);
+            const start_info = server.start_info;
+            const file_name = start_info.file_name;
+            const directory = start_info.directory;
+            const newName = prompt("Enter new server name:", name);
+            const newFile_name = prompt("Enter new server start file name:", file_name);
+            const newDirectory = prompt("Enter new server directory:", directory);
+            const newStart_info = {"file_name": newFile_name, "directory": newDirectory} // Gotta use keys so its right in the json file
+            if (newName && newDirectory && newFile_name) {
+                fetch("/edit", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ name, newName, newStart_info })
+                }).then(() => location.reload());
+            }
+        }
+
+        function removeServer(name) {
+            fetch("/remove", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name })
+            }).then(() => location.reload());
+        }
+
+        function addServer() {
+            const name = prompt("Enter server name:");
+            const directory = prompt("Enter server directory:");
+            const file_name = prompt("Enter server start file name:");
+            const start_info = {file_name, directory}
+            if (name && directory && file_name) {
+                fetch("/add", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ name, start_info })
+                }).then(() => location.reload());
+            }
+        }
+    </script>
+</body>
+</html>

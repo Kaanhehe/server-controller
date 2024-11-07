@@ -1,0 +1,23 @@
+[
+    {
+        "name": "Minecraft cxxu SMP Server",
+        "start_info": {
+            "file_name": "startmcserver.cmd",
+            "directory": "C:\\Users\\kaanH\\Documents\\GitHub\\cxxu-smp-server"
+        }
+    },
+    {
+        "name": "FiveM FallenStates Server",
+        "start_info": {
+            "file_name": "launchall.cmd",
+            "directory": "C:\\Users\\kaanH\\Documents\\GitHub\\Fallen-States"
+        }
+    },
+    {
+        "name": "Minecraft Server",
+        "start_info": {
+            "file_name": "startmcserver.cmd",
+            "directory": "C:\\Users\\kaanH\\Documents\\GitHub\\minecraft-server"
+        }
+    }
+]
