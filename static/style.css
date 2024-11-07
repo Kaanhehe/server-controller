@@ -1,18 +1,97 @@
 body {
-    font-family: Arial, sans-serif;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     margin: 20px;
+    background-color: #343a40;
+    color: #f8f9fa;
+    transition: background-color 0.3s, color 0.3s;
 }
 
 h1 {
-    color: #333;
+    color: #f8f9fa;
 }
 
 .server-item {
     margin-bottom: 10px;
+    background-color: #495057;
+    color: #f8f9fa;
+    transition: transform 0.2s ease-in-out;
+}
+
+.server-item:hover {
+    transform: scale(1.02);
 }
 
 button {
     margin-left: 5px;
     padding: 5px 10px;
     cursor: pointer;
+    background-color: #6c757d;
+    color: #f8f9fa;
+    transition: background-color 0.3s ease, transform 0.2s ease-in-out;
+}
+
+button:hover {
+    background-color: #5a6268;
+    transform: scale(1.05);
+}
+
+button:active {
+    transform: scale(0.95);
+}
+
+#notification {
+    position: fixed;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    width: 80%;
+    text-align: center;
+}
+
+.server-status {
+    margin-left: 10px;
+    font-weight: bold;
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: 10px;
+}
+
+.status-running {
+    color: green;
+    background-color: green;
+}
+
+.status-starting {
+    color: orange;
+    background-color: yellow;
+}
+
+.status-stopped {
+    color: red;
+    background-color: red;
+}
+
+.modal-content {
+    background-color: #343a40;
+    color: #f8f9fa;
+}
+
+.modal-header, .modal-footer {
+    border-color: #495057;
+}
+
+.form-control {
+    background-color: #495057;
+    color: #f8f9fa;
+    border: 1px solid #6c757d;
+}
+
+.form-control:focus {
+    background-color: #495057;
+    color: #f8f9fa;
+    border-color: #6c757d;
+    box-shadow: none;
 }

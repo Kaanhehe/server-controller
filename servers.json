@@ -19,5 +19,12 @@
             "file_name": "startmcserver.cmd",
             "directory": "C:\\Users\\kaanH\\Documents\\GitHub\\minecraft-server"
         }
+    },
+    {
+        "name": "FiveM Test Server",
+        "start_info": {
+            "file_name": "launchall.cmd",
+            "directory": "C:\\Users\\kaanH\\Documents\\GitHub\\FiveM-Test-Server"
+        }
     }
 ]

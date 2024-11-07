@@ -4,47 +4,166 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Server Control Panel</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <link rel="stylesheet" href="/static/style.css">
 </head>
-<body>
-    <h1>Server Control Panel</h1>
-    <div id="server-list">
-        {% for server in servers %}
-        <div class="server-item">
-            <span>{{ server.name }}</span>
-            <button onclick="startServer('{{ server.name }}')">Start</button>
-            <button onclick="editServer('{{ server.name }}')">Edit</button>
-            <button onclick="removeServer('{{ server.name }}')">Remove</button>
-        </div>
-        {% endfor %}
+<body class="container dark-mode">
+    <div id="notification" class="alert" style="display: none;"></div>
+    <h1 class="my-4">Server Control Panel</h1>
+    <div class="d-flex justify-content-between align-items-center">
+        <button class="btn btn-info my-4" onclick="showAddServerModal()">Add Server</button>
+        <button class="btn btn-secondary my-2" onclick="fetchServers()">Refresh</button>
     </div>
-    <button onclick="addServer()">Add Server</button>
+    <div id="server-list" class="list-group">
+        <!-- Server list will be dynamically populated -->
+    </div>
+
+    <!-- Add/Edit Server Modal -->
+    <div class="modal fade" id="serverModal" tabindex="-1" aria-labelledby="serverModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="serverModalLabel">Add Server</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="serverForm">
+                        <div class="form-group">
+                            <label for="serverName">Server Name</label>
+                            <input type="text" class="form-control" id="serverName" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="serverDirectory">Server Directory</label>
+                            <input type="text" class="form-control" id="serverDirectory" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="serverFileName">Server Start File Name</label>
+                            <input type="text" class="form-control" id="serverFileName" required>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="saveServerButton" onclick="saveServer()">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <script>
         // Pass the servers data to JavaScript
-        var servers = {{ servers | tojson }};
+        var servers = {{ servers | tojson }}; // ignore error in this line, it's fine
+        var editingServerName = null;
+
+        function showNotification(message, type) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = `alert alert-${type}`;
+            notification.style.display = 'block';
+            fetchServers();
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 3000); // Hide notification after 3 seconds
+        }
+
+        function fetchServers() {
+            fetch("/servers")
+                .then(response => response.json())
+                .then(data => {
+                    servers = data;
+                    const serverList = document.getElementById('server-list');
+                    serverList.innerHTML = '';
+                    servers.forEach(server => {
+                        const serverItem = document.createElement('div');
+                        serverItem.className = 'server-item list-group-item d-flex justify-content-between align-items-center';
+                        let statusClass;
+                        if (server.status === "running") {
+                            statusClass = "status-running";
+                        } else if (server.status === "starting") {
+                            statusClass = "status-starting";
+                        } else {
+                            statusClass = "status-stopped";
+                        }
+                        serverItem.innerHTML = `
+                            <span><span class="server-status ${statusClass}"></span>${server.name}</span>
+                            <div>
+                                <button class="btn btn-success btn-sm" onclick="startServer('${server.name}')">Start</button>
+                                <button class="btn btn-warning btn-sm" onclick="stopServer('${server.name}')">Stop</button>
+                                <button class="btn btn-primary btn-sm" onclick="showEditServerModal('${server.name}')">Edit</button>
+                                <button class="btn btn-danger btn-sm" onclick="removeServer('${server.name}')">Remove</button>
+                            </div>
+                        `;
+                        serverList.appendChild(serverItem);
+                    });
+                });
+        }
+
         function startServer(name) {
             fetch("/start", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ name })
-            });
+            }).then(response => response.json())
+              .then(data => showNotification(data.message, data.status === "success" ? "success" : "danger"));
         }
 
-        function editServer(name) {
+        function stopServer(name) {
+            fetch("/stop", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name })
+            }).then(response => response.json())
+              .then(data => showNotification(data.message, data.status === "success" ? "success" : "danger"));
+        }
+
+        function showAddServerModal() {
+            editingServerName = null;
+            document.getElementById('serverModalLabel').textContent = 'Add Server';
+            document.getElementById('serverForm').reset();
+            $('#serverModal').modal('show');
+        }
+
+        function showEditServerModal(name) {
+            editingServerName = name;
             const server = servers.find(s => s.name === name);
-            const start_info = server.start_info;
-            const file_name = start_info.file_name;
-            const directory = start_info.directory;
-            const newName = prompt("Enter new server name:", name);
-            const newFile_name = prompt("Enter new server start file name:", file_name);
-            const newDirectory = prompt("Enter new server directory:", directory);
-            const newStart_info = {"file_name": newFile_name, "directory": newDirectory} // Gotta use keys so its right in the json file
-            if (newName && newDirectory && newFile_name) {
+            document.getElementById('serverModalLabel').textContent = 'Edit Server';
+            document.getElementById('serverName').value = server.name;
+            document.getElementById('serverDirectory').value = server.start_info.directory;
+            document.getElementById('serverFileName').value = server.start_info.file_name;
+            $('#serverModal').modal('show');
+        }
+
+        function saveServer() {
+            const name = document.getElementById('serverName').value;
+            const directory = document.getElementById('serverDirectory').value;
+            const file_name = document.getElementById('serverFileName').value;
+            const start_info = {file_name, directory};
+
+            if (editingServerName) {
                 fetch("/edit", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ name, newName, newStart_info })
-                }).then(() => location.reload());
+                    body: JSON.stringify({ name: editingServerName, newName: name, newStart_info: start_info })
+                }).then(response => response.json())
+                  .then(data => {
+                      showNotification(data.message, data.status === "success" ? "success" : "danger");
+                      $('#serverModal').modal('hide');
+                  });
+            } else {
+                fetch("/add", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ name, start_info })
+                }).then(response => response.json())
+                  .then(data => {
+                      showNotification(data.message, data.status === "success" ? "success" : "danger");
+                      $('#serverModal').modal('hide');
+                  });
             }
         }
 
@@ -53,22 +172,14 @@
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ name })
-            }).then(() => location.reload());
+            }).then(response => response.json())
+              .then(data => {
+                  showNotification(data.message, data.status === "success" ? "success" : "danger");
+              });
         }
 
-        function addServer() {
-            const name = prompt("Enter server name:");
-            const directory = prompt("Enter server directory:");
-            const file_name = prompt("Enter server start file name:");
-            const start_info = {file_name, directory}
-            if (name && directory && file_name) {
-                fetch("/add", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ name, start_info })
-                }).then(() => location.reload());
-            }
-        }
+        // Fetch servers on page load
+        document.addEventListener('DOMContentLoaded', fetchServers);
     </script>
 </body>
 </html>
