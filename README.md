@@ -16,7 +16,7 @@ Server Controller is a web-based application that allows you to manage multiple 
 - Flask
 - psutil
 - psexec (for running commands as admin)
-- pywin32 (optional, if you want to send CTRL+C to processes)
+- dotenv
 
 ## Installation
 
@@ -34,8 +34,10 @@ pip install -r requirements.txt
 ```
 
 3. Create a .env file in the project root directory and add your user and password:
+```python
 USER=your_username
 PASSWORD=your_password
+´´´
 
 4. Create a pid folder in the project root directory if not there yet:
 ```sh
