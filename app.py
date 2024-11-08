@@ -14,6 +14,10 @@ app = Flask(__name__)
 
 # Load server configurations from a JSON file
 SERVERS_FILE = "servers.json"
+PID_FOLDER = "pid"
+
+if not os.path.exists(PID_FOLDER):
+    os.makedirs(PID_FOLDER)
 
 def load_servers():
     if os.path.exists(SERVERS_FILE):
@@ -27,7 +31,7 @@ def save_servers(servers):
         json.dump(servers, file, indent=4)
 
 def get_server_status(server):
-    pid_file = f"{server['name']}.pid"
+    pid_file = os.path.join(PID_FOLDER, f"{server['name']}.pid")
     if os.path.exists(pid_file):
         with open(pid_file, "r") as file:
             pid = int(file.read().strip())
@@ -53,8 +57,9 @@ def start_server():
     if file_name and directory:
         start_command = os.path.join(directory, file_name)
         process = subprocess.Popen(['psexec.exe', '-u', user, '-p', password, start_command], shell=True) # using psexec to run command as admin
-        with open(f"{server['name']}.pid", "w") as pid_file:
-            pid_file.write(str(process.pid))
+        pid_file = os.path.join(PID_FOLDER, f"{server['name']}.pid")
+        with open(pid_file, "w") as file:
+            file.write(str(process.pid))
         return jsonify({"status": "success", "message": f"Started: {server['name']}"})
     return jsonify({"status": "error", "message": "No command provided"})
 
@@ -64,7 +69,7 @@ def stop_server():
     servers = load_servers()
     server = next((s for s in servers if s["name"] == data.get("name")), None)
     if server:
-        pid_file = f"{server['name']}.pid"
+        pid_file = os.path.join(PID_FOLDER, f"{server['name']}.pid")
         if os.path.exists(pid_file):
             with open(pid_file, "r") as file:
                 pid = int(file.read().strip())
@@ -106,7 +111,7 @@ def remove_server():
     servers = load_servers()
     servers = [s for s in servers if s["name"] != data.get("name")]
     save_servers(servers)
-    pid_file = f"{data.get('name')}.pid"
+    pid_file = os.path.join(PID_FOLDER, f"{data.get('name')}.pid")
     if os.path.exists(pid_file):
         os.remove(pid_file)
     return jsonify({"status": "success", "message": "Server removed"})
