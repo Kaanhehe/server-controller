@@ -14,6 +14,9 @@
         <button class="btn btn-info my-4" onclick="showAddServerModal()">Add Server</button>
         <button class="btn btn-secondary my-2" onclick="fetchServers()">Refresh</button>
     </div>
+    <div id="loading-spinner" class="spinner-border text-light" role="status" style="display: none;">
+        <span class="sr-only">Loading...</span>
+    </div>
     <div id="server-list" class="list-group">
         <!-- Server list will be dynamically populated -->
     </div>
@@ -52,6 +55,27 @@
         </div>
     </div>
 
+    <!-- Delete Confirmation Modal -->
+    <div class="modal fade" id="deleteConfirmationModal" tabindex="-1" aria-labelledby="deleteConfirmationModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deleteConfirmationModalLabel">Confirm Delete</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    Are you sure you want to remove the server: <strong id="serverToDelete"></strong>?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" id="confirmDeleteButton">Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
@@ -59,6 +83,7 @@
         // Pass the servers data to JavaScript
         var servers = {{ servers | tojson }}; // ignore error in this line, it's fine
         var editingServerName = null;
+        var serverToDelete = null;
 
         function showNotification(message, type) {
             const notification = document.getElementById('notification');
@@ -72,6 +97,7 @@
         }
 
         function fetchServers() {
+            document.getElementById('loading-spinner').style.display = 'block';
             fetch("/servers")
                 .then(response => response.json())
                 .then(data => {
@@ -95,11 +121,12 @@
                                 <button class="btn btn-success btn-sm" onclick="startServer('${server.name}')">Start</button>
                                 <button class="btn btn-warning btn-sm" onclick="stopServer('${server.name}')">Stop</button>
                                 <button class="btn btn-primary btn-sm" onclick="showEditServerModal('${server.name}')">Edit</button>
-                                <button class="btn btn-danger btn-sm" onclick="removeServer('${server.name}')">Remove</button>
+                                <button class="btn btn-danger btn-sm" onclick="showDeleteConfirmationModal('${server.name}')">Remove</button>
                             </div>
                         `;
                         serverList.appendChild(serverItem);
                     });
+                    document.getElementById('loading-spinner').style.display = 'none';
                 });
         }
 
@@ -167,16 +194,25 @@
             }
         }
 
-        function removeServer(name) {
-            fetch("/remove", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ name })
-            }).then(response => response.json())
-              .then(data => {
-                  showNotification(data.message, data.status === "success" ? "success" : "danger");
-              });
+        function showDeleteConfirmationModal(name) {
+            serverToDelete = name;
+            document.getElementById('serverToDelete').textContent = name;
+            $('#deleteConfirmationModal').modal('show');
         }
+
+        document.getElementById('confirmDeleteButton').addEventListener('click', function() {
+            if (serverToDelete) {
+                fetch("/remove", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ name: serverToDelete })
+                }).then(response => response.json())
+                  .then(data => {
+                      showNotification(data.message, data.status === "success" ? "success" : "danger");
+                      $('#deleteConfirmationModal').modal('hide');
+                  });
+            }
+        });
 
         // Fetch servers on page load
         document.addEventListener('DOMContentLoaded', fetchServers);
