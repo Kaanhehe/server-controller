@@ -39,11 +39,6 @@ USER=your_username
 PASSWORD=your_password
 ```
 
-4. Create a pid folder in the project root directory if not there yet:
-```sh
-mkdir pid
-```
-
 ## Usage
 1. Run the flask application:
 ```sh
