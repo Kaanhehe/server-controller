@@ -37,7 +37,7 @@ pip install -r requirements.txt
 ```python
 USER=your_username
 PASSWORD=your_password
-´´´
+```
 
 4. Create a pid folder in the project root directory if not there yet:
 ```sh
