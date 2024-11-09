@@ -1,4 +1,5 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, redirect, url_for, session
+from functools import wraps
 import os
 import subprocess
 import json
@@ -9,8 +10,10 @@ load_dotenv()
 
 user = os.getenv("USER")
 password = os.getenv("PASSWORD")
+app_secret = os.getenv("APP_SECRET")
 
 app = Flask(__name__)
+app.secret_key = app_secret
 
 # Load server configurations from a JSON file
 SERVERS_FILE = "servers.json"
@@ -47,7 +50,31 @@ def get_server_status(server):
             print(f"Error reading PID file: {e}")
     return "stopped"
 
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'logged_in' not in session:
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        if request.form["username"] == user and request.form["password"] == password:
+            session['logged_in'] = True
+            return redirect(url_for('index'))
+        else:
+            return "Invalid credentials", 401
+    return render_template("login.html")
+
+@app.route("/logout")
+def logout():
+    session.pop('logged_in', None)
+    return redirect(url_for('login'))
+
 @app.route("/")
+@login_required
 def index():
     servers = load_servers()
     for server in servers:
