@@ -9,6 +9,7 @@ Server Controller is a web-based application that allows you to manage multiple 
 - Edit existing servers
 - Remove servers
 - View server status (running, starting, stopped)
+- Start/Stop via HTTP Request
 
 ## Prerequisites
 
