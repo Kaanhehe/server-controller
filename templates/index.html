@@ -85,6 +85,8 @@
         var editingServerName = null;
         var serverToDelete = null;
 
+        const authKey = "{{ auth_key }}"; // Pass the auth_key to JavaScript
+
         function showNotification(message, type) {
             const notification = document.getElementById('notification');
             notification.textContent = message;
@@ -131,7 +133,7 @@
         }
 
         function startServer(name) {
-            fetch("/start", {
+            fetch(`/start?auth_key=${authKey}`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ name })
@@ -140,7 +142,7 @@
         }
 
         function stopServer(name) {
-            fetch("/stop", {
+            fetch(`/stop?auth_key=${authKey}`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ name })

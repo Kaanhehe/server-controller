@@ -11,6 +11,7 @@ load_dotenv()
 user = os.getenv("USER")
 password = os.getenv("PASSWORD")
 app_secret = os.getenv("APP_SECRET")
+auth_key = os.getenv("AUTH_KEY")
 
 app = Flask(__name__)
 app.secret_key = app_secret
@@ -58,6 +59,14 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
+def auth_key_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if request.args.get('auth_key') != auth_key:
+            return jsonify({"status": "error", "message": "Unauthorized"}), 401
+        return f(*args, **kwargs)
+    return decorated_function
+
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
@@ -79,9 +88,10 @@ def index():
     servers = load_servers()
     for server in servers:
         server["status"] = get_server_status(server)
-    return render_template("index.html", servers=servers)
+    return render_template("index.html", servers=servers, auth_key=auth_key)
 
 @app.route("/start", methods=["POST"])
+@auth_key_required
 def start_server():
     data = request.json
     servers = load_servers()
@@ -103,6 +113,7 @@ def start_server():
     return jsonify({"status": "error", "message": "Server not found"})
 
 @app.route("/stop", methods=["POST"])
+@auth_key_required
 def stop_server():
     data = request.json
     servers = load_servers()
@@ -124,6 +135,7 @@ def stop_server():
     return jsonify({"status": "error", "message": "Server not running or PID file not found"})
 
 @app.route("/edit", methods=["POST"])
+@login_required
 def edit_server():
     data = request.json
     servers = load_servers()
@@ -140,6 +152,7 @@ def edit_server():
     return jsonify({"status": "error", "message": "Server not found"})
 
 @app.route("/add", methods=["POST"])
+@login_required
 def add_server():
     data = request.json
     servers = load_servers()
@@ -148,6 +161,7 @@ def add_server():
     return jsonify({"status": "success", "message": "Server added"})
 
 @app.route("/remove", methods=["POST"])
+@login_required
 def remove_server():
     data = request.json
     servers = load_servers()
@@ -162,6 +176,7 @@ def remove_server():
     return jsonify({"status": "success", "message": "Server removed"})
 
 @app.route("/servers", methods=["GET"])
+@login_required
 def get_servers():
     servers = load_servers()
     for server in servers:
